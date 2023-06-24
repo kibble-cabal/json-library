@@ -66,6 +66,24 @@ func vec3i() -> JVectorValidator:
 	return is_integer().add_property("x", _validator).add_property("y", _validator).add_property("z", _validator)
 
 
+func vec4() -> JVectorValidator:
+	_output = TYPE_VECTOR4
+	return (is_float()
+		.add_property("x", _validator)
+		.add_property("y", _validator)
+		.add_property("z", _validator)
+		.add_property("w", _validator))
+
+
+func vec4i() -> JVectorValidator:
+	_output = TYPE_VECTOR4I
+	return (is_integer()
+		.add_property("x", _validator)
+		.add_property("y", _validator)
+		.add_property("z", _validator)
+		.add_property("w", _validator))
+
+
 ## Sets validator to validate as a color
 func color() -> JVectorValidator:
 	_output = TYPE_COLOR
@@ -99,5 +117,7 @@ func cleaned_data(data, default := {}):
 		TYPE_VECTOR2I: return Vector2i(cleaned.x, cleaned.y)
 		TYPE_VECTOR3: return Vector3(cleaned.x, cleaned.y, cleaned.z)
 		TYPE_VECTOR3I: return Vector3i(cleaned.x, cleaned.y, cleaned.z)
+		TYPE_VECTOR4: return Vector4(cleaned.x, cleaned.y, cleaned.z, cleaned.w)
+		TYPE_VECTOR4I: return Vector4i(cleaned.x, cleaned.y, cleaned.z, cleaned.w)
 		TYPE_COLOR: return Color(cleaned.r, cleaned.g, cleaned.b, cleaned.a if "a" in cleaned else 1.0)
 		_: return data
