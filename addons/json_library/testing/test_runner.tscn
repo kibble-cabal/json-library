@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://2sm0axmy2noa"]
+
+[ext_resource type="Script" path="res://addons/json_library/validators/tests/test_validation.gd" id="1_0nahr"]
+
+[node name="TestRunner" type="ScrollContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TestSetContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="TestValidation" type="VBoxContainer" parent="TestSetContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+script = ExtResource("1_0nahr")
+test_set_name = "Validator Tests"
