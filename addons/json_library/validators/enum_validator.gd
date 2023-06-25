@@ -15,6 +15,7 @@ func ignore_case() -> JEnumValidator:
 
 
 func is_valid(data) -> bool:
+	if data == null: return _is_nullable
 	if not data is String: return false
 	if _ignore_case:
 		for enum_key in _enum.keys():

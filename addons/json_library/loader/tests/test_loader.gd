@@ -3,7 +3,6 @@ extends JTestRunner
 var data_path := Json.Utils.Path.new(Json.get_plugin_directory().path_join("testing/test_data/"))
 
 func _init() -> void:
-	print(Json.get_plugin_directory())
 	tests = (
 		test_load_validate()
 		+ test_load_object()

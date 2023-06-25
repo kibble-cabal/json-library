@@ -32,6 +32,7 @@ func step(value) -> JNumberValidator:
 
 
 func is_valid(data) -> bool:
+	if data == null: return _is_nullable
 	return (
 		(data is float or data is int)
 		and (data >= _min if _has_min else true)

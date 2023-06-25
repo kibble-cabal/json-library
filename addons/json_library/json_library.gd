@@ -10,6 +10,5 @@ const Utils := {
 
 
 static func get_plugin_directory() -> String:
-	print(Json.Editor)
 	if Json.Editor: return Json.Editor.get_current_directory()
 	else: return "res://addons/json_library"

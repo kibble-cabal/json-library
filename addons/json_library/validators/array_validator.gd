@@ -27,7 +27,8 @@ func max_size(value: int) -> JArrayValidator:
 
 
 func is_valid(data) -> bool:
-	return (
+	if data == null: return _is_nullable
+	else: return (
 		data is Array
 		and (data.size() >= _min_size if _has_min_size else true)
 		and (data.size() <= _max_size if _has_max_size else true)

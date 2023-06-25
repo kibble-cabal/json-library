@@ -12,6 +12,8 @@ func _init() -> void:
 		+ test_enum_validator()
 		+ test_array_validator()
 		+ test_path_validator()
+		+ test_null()
+		+ test_nullable()
 	)
 
 
@@ -199,4 +201,42 @@ func test_path_validator() -> Array[JTestCase]:
 		),
 		# Cleaned data
 		JTestCase.new("cleaned path").expect_equal(JPathValidator.new().image().cleaned_data.bind("my//path///my_image.png"), "my/path/my_image.png"),
+	]
+
+
+static func test_null() -> Array[JTestCase]:
+	return [
+		JTestCase.new("is null").expect(JNullValidator.new().is_valid.bind(null)),
+		JTestCase.new("is not null").expect_false(JNullValidator.new().is_valid.bind("hello world")),
+		JTestCase.new("has null property").expect(
+			JsonValidator.new()
+				.add_property("null_field", JNullValidator.new())
+				.is_valid
+				.bind({ null_field = null })
+		),
+		JTestCase.new("has non-null property").expect_false(
+			JsonValidator.new()
+				.add_property("null_field", JNullValidator.new())
+				.is_valid
+				.bind({ null_field = "hello world" })
+		),
+	]
+
+
+static func test_nullable() -> Array[JTestCase]:
+	return [
+		JTestCase.new("nullable string").expect(JStringValidator.new().is_nullable().is_valid.bind(null)),
+		JTestCase.new("non-nullable string").expect_false(JStringValidator.new().is_valid.bind(null)),
+		JTestCase.new("has nullable property").expect(
+			JsonValidator.new()
+				.add_property("nullable_field", JStringValidator.new().is_nullable())
+				.is_valid
+				.bind({ nullable_field = null })
+		),
+		JTestCase.new("has non-nullable property").expect_false(
+			JsonValidator.new()
+				.add_property("non_nullable_field", JStringValidator.new())
+				.is_valid
+				.bind({ non_nullable_field = null })
+		),
 	]

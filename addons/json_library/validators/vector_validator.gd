@@ -97,6 +97,7 @@ func all_optional(is_optional_value := true) -> JVectorValidator:
 
 
 func is_valid(data) -> bool:
+	if data == null: return _is_nullable
 	if not data is Dictionary: return false
 	ignore_case()
 	for name in _validators: _validators[name] = _validator

@@ -21,6 +21,7 @@ func max_length(value: int) -> JStringValidator:
 
 
 func is_valid(data) -> bool:
+	if data == null: return _is_nullable
 	return (
 		data is String
 		and (data.length() >= _min_length if _min_length_is_set else true)

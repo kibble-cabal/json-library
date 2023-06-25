@@ -2,6 +2,7 @@ class_name JIntValidator extends JNumberValidator
 
 
 func is_valid(data) -> bool:
+	if data == null: return _is_nullable
 	return super.is_valid(data) and Json.Utils.Math.is_rounded(data)
 
 
