@@ -103,10 +103,10 @@ func is_valid(data) -> bool:
 	return super.is_valid(data)
 
 
-func cleaned_data(data, default := {}):
+func cleaned_data(data, default = {}):
 	var cleaned := {}
 	# Convert to case insensitive defaults
-	for default_key in default: 
+	if default: for default_key in default: 
 		cleaned[default_key.to_lower()] = default[default_key]
 	# Clean int/floats
 	for data_key in data.keys():

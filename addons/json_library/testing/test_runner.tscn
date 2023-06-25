@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://2sm0axmy2noa"]
+[gd_scene load_steps=3 format=3 uid="uid://2sm0axmy2noa"]
 
 [ext_resource type="Script" path="res://addons/json_library/validators/tests/test_validation.gd" id="1_0nahr"]
+[ext_resource type="Script" path="res://addons/json_library/loader/tests/test_loader.gd" id="1_fsb6n"]
 
 [node name="TestRunner" type="ScrollContainer"]
 anchors_preset = 15
@@ -14,6 +15,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
+
+[node name="TestLoader" type="VBoxContainer" parent="TestSetContainer"]
+layout_mode = 2
+script = ExtResource("1_fsb6n")
+test_set_name = "Loader Tests"
 
 [node name="TestValidation" type="VBoxContainer" parent="TestSetContainer"]
 layout_mode = 2

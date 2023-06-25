@@ -1,4 +1,4 @@
-extends Object
+class_name JsonLibrary_Utils_Path extends Object
 
 
 ## Utility functions to handle file system paths
@@ -10,8 +10,8 @@ func _init(path: String) -> void:
 	_path = path.simplify_path()
 
 
-func join(path: String) -> void:
-	_path.path_join(path)
+func join(path: String) -> String:
+	return _path.path_join(path)
 
 
 func extension() -> String:
