@@ -87,9 +87,11 @@ func test_int_validator() -> Array[JTestCase]:
 		# Minimum
 		JTestCase.new("is above minimum").expect(JIntValidator.new().set_minimum(1).is_valid.bind(1)),
 		JTestCase.new("is below minimum").expect_false(JIntValidator.new().set_minimum(1).is_valid.bind(-1)),
+		JTestCase.new("is below minimum (exclusive)").expect_false(JIntValidator.new().set_minimum_exclusive(1).is_valid.bind(1)),
 		# Maximum
 		JTestCase.new("is below maximum").expect(JIntValidator.new().set_maximum(5).is_valid.bind(3)),
-		JTestCase.new("is below minimum").expect_false(JIntValidator.new().set_maximum(-1).is_valid.bind(3)),
+		JTestCase.new("is above maximum").expect_false(JIntValidator.new().set_maximum(-1).is_valid.bind(3)),
+		JTestCase.new("is above maximum (exclusive)").expect_false(JIntValidator.new().set_maximum_exclusive(-1).is_valid.bind(-1)),
 		# Step
 		JTestCase.new("is multiple of 3").expect(JIntValidator.new().set_step(3).is_valid.bind(6)),
 		JTestCase.new("if not multiple of 3").expect_false(JIntValidator.new().set_step(3).is_valid.bind(7)),
