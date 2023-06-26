@@ -22,8 +22,19 @@ func max_length(value: int) -> JStringValidator:
 
 func is_valid(data) -> bool:
 	if data == null: return _is_nullable
+	if not super.is_valid(data): return false
 	return (
 		data is String
 		and (data.length() >= _min_length if _min_length_is_set else true)
 		and (data.length() <= _max_length if _max_length_is_set else true)
 	)
+
+
+static func from_schema(schema: Dictionary) -> JPropertyValidator:
+	if schema.get("type") == "string": 
+		var validator := JStringValidator.new()
+		if "minLength" in schema: validator.min_length(int(schema["minLength"]))
+		if "maxLength" in schema: validator.max_length(int(schema["maxLength"]))
+		if "enum" in schema: validator.options(schema["enum"])
+		return validator
+	return null

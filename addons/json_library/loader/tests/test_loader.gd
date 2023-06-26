@@ -1,12 +1,13 @@
 extends JTestRunner
 
-var data_path := Json.Utils.Path.new(Json.get_plugin_directory().path_join("testing/test_data/"))
+var data_path := Json.Path.new(Json.get_plugin_directory().path_join("testing/test_data/"))
 
 func _init() -> void:
 	tests = (
 		test_load_validate()
 		+ test_load_object()
 		+ test_load_vector()
+		+ test_load_schema()
 	)
 
 
@@ -58,4 +59,16 @@ func test_load_vector() -> Array[JTestCase]:
 				.load,
 			Vector3(1, 2, -1)
 		),
+	]
+
+
+func test_load_schema() -> Array[JTestCase]:
+	var validator: JPropertyValidator = (
+		JsonSchemaLoader.new(data_path.join("object_schema.json"))
+			.load_validator()
+	)
+	return [
+		JTestCase.new("is valid").expect(validator.is_valid.bind({ my_property = true })),
+		JTestCase.new("missing required key").expect_false(validator.is_valid.bind({ my_other_property = true })),
+		JTestCase.new("wrong property type").expect_false(validator.is_valid.bind({ my_property = 1 })),
 	]

@@ -63,8 +63,9 @@ func should_exist(value: bool = true) -> JPathValidator:
 
 func is_valid(data) -> bool:
 	if data == null: return _is_nullable
+	if not super.is_valid(data): return false
 	if not data is String: return false
-	var path := Json.Utils.Path.new(data)
+	var path := Json.Path.new(data)
 	return (
 		super.is_valid(data)
 		and ((

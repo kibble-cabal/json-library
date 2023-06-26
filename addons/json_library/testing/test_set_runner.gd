@@ -24,8 +24,8 @@ func run_test(test: JTestCase) -> void:
 	var test_results: Dictionary = test.get_test_results()
 	add_child(make_label(
 		test_results.report
-			.replace("green", "MEDIUM_SEA_GREEN")
-			.replace("red", "TOMATO")
+			.replace("=green", "=MEDIUM_SEA_GREEN")
+			.replace("=red", "=TOMATO")
 	))
 	if not test_results.is_ok:
 		add_child(make_label("[color=TOMATO]{error_report}[/color]".format(test_results)))

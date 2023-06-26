@@ -1,6 +1,8 @@
 class_name JEnumValidator extends JPropertyValidator
 
 var _enum: Dictionary
+var _has_allowed_options := false
+var _allowed_options: Array[String] = []
 var _ignore_case := false
 
 
@@ -14,13 +16,21 @@ func ignore_case() -> JEnumValidator:
 	return self
 
 
+func allow_options(options: Array[String]) -> JEnumValidator:
+	_has_allowed_options = true
+	_allowed_options.append_array(options)
+	return self
+
+
 func is_valid(data) -> bool:
 	if data == null: return _is_nullable
 	if not data is String: return false
 	if _ignore_case:
-		for enum_key in _enum.keys():
-			if enum_key.to_lower() == data.to_lower(): return true
-		return false
+		var enum_keys := Json.List.map_to_lower(_enum.keys())
+		if data.to_lower() in enum_keys:
+			if _has_allowed_options: return data.to_lower() in Json.List.map_to_lower(_allowed_options)
+			else: return true
+		else: return false
 	else: return data in _enum
 
 

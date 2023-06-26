@@ -14,6 +14,7 @@ func _init() -> void:
 		+ test_path_validator()
 		+ test_null()
 		+ test_nullable()
+		+ test_dict_validator()
 	)
 
 
@@ -56,6 +57,9 @@ func test_string_validator() -> Array[JTestCase]:
 		# Maximum length
 		JTestCase.new("is below maximum length").expect(JStringValidator.new().max_length(2).is_valid.bind("a")),
 		JTestCase.new("is above maximum length").expect_false(JStringValidator.new().max_length(2).is_valid.bind("abc")),
+		# Is one of options
+		JTestCase.new("is one of options").expect(JStringValidator.new().options(["a", "b", "c"]).is_valid.bind("b")),
+		JTestCase.new("is not one of options").expect_false(JStringValidator.new().options(["a", "b", "c"]).is_valid.bind("d")),
 	]
 
 
@@ -64,10 +68,10 @@ func test_bool_validator() -> Array[JTestCase]:
 		JTestCase.new("is bool").expect(JBoolValidator.new().is_valid.bind(false)),
 		JTestCase.new("is not bool").expect_false(JBoolValidator.new().is_valid.bind({})),
 		# Truthy/falsey conversions
-		JTestCase.new("is bool string").expect(JBoolValidator.new().is_valid.bind("True")),
-		JTestCase.new("is not bool string").expect_false(JBoolValidator.new().is_valid.bind("Yes")),
-		JTestCase.new("is bool int").expect(JBoolValidator.new().is_valid.bind(0)),
-		JTestCase.new("is not bool int").expect_false(JBoolValidator.new().is_valid.bind(10)),
+		JTestCase.new("is bool truthy string").expect(JBoolValidator.new().allow_truthy_falsey().is_valid.bind("True")),
+		JTestCase.new("is not bool truthy/falsey string").expect_false(JBoolValidator.new().allow_truthy_falsey().is_valid.bind("Yes")),
+		JTestCase.new("is bool falsey int").expect(JBoolValidator.new().allow_truthy_falsey().is_valid.bind(0)),
+		JTestCase.new("is not bool truthy/falsey int").expect_false(JBoolValidator.new().allow_truthy_falsey().is_valid.bind(10)),
 		# Cleaned data
 		JTestCase.new("cleaned truthy string").expect(JBoolValidator.new().cleaned_data.bind("TRUE")),
 		JTestCase.new("cleaned falsey int").expect_false(JBoolValidator.new().cleaned_data.bind(0)),
@@ -76,8 +80,9 @@ func test_bool_validator() -> Array[JTestCase]:
 
 func test_int_validator() -> Array[JTestCase]:
 	return [
-	# Int
-		JTestCase.new("is int").expect_false(JIntValidator.new().is_valid.bind(0.5)),
+		# Int
+		JTestCase.new("is not int").expect(JIntValidator.new().is_valid.bind(1)),
+		JTestCase.new("is not int").expect_false(JIntValidator.new().is_valid.bind(0.5)),
 		# Minimum
 		JTestCase.new("is above minimum").expect(JIntValidator.new().minimum(1).is_valid.bind(1)),
 		JTestCase.new("is below minimum").expect_false(JIntValidator.new().minimum(1).is_valid.bind(-1)),
@@ -89,6 +94,9 @@ func test_int_validator() -> Array[JTestCase]:
 		JTestCase.new("if not multiple of 3").expect_false(JIntValidator.new().step(3).is_valid.bind(7)),
 		# Cleaned data
 		JTestCase.new("is cleaned").expect_equal(JIntValidator.new().cleaned_data.bind(1.0), 1),
+		# Is one of options
+		JTestCase.new("is one of options").expect(JIntValidator.new().options([1, 2, 3]).is_valid.bind(2)),
+		JTestCase.new("is not one of options").expect_false(JIntValidator.new().options([1, 2, 3]).is_valid.bind(-1)),
 	]
 
 
@@ -171,6 +179,9 @@ func test_array_validator() -> Array[JTestCase]:
 		# Cleaned data
 		JTestCase.new("cleaned bool array").expect_equal(JArrayValidator.new().elements(JBoolValidator.new()).cleaned_data.bind(["true", "false"]), [true, false]),
 		JTestCase.new("cleaned bool array mismatched").expect_not_equal(JArrayValidator.new().elements(JBoolValidator.new()).cleaned_data.bind(["true", "false"]), [false, true]),
+		# Is one of options
+		JTestCase.new("is one of options").expect(JArrayValidator.new().options([[1, 2], [3, 4]]).is_valid.bind([1, 2])),
+		JTestCase.new("is not one of options").expect_false(JArrayValidator.new().options([[1, 2], [3, 4]]).is_valid.bind([5, 6])),
 	]
 
 
@@ -190,17 +201,20 @@ func test_path_validator() -> Array[JTestCase]:
 				.directory()
 				.should_exist()
 				.is_valid
-				.bind(Json.Utils.Path.new(get_stack()[0].source).directory())
+				.bind(Json.Path.new(get_stack()[0].source).directory())
 		),
 		JTestCase.new("is not file").expect_false(
 			JPathValidator.new()
 				.file()
 				.should_exist()
 				.is_valid
-				.bind(Json.Utils.Path.new(get_stack()[0].source).directory())
+				.bind(Json.Path.new(get_stack()[0].source).directory())
 		),
 		# Cleaned data
 		JTestCase.new("cleaned path").expect_equal(JPathValidator.new().image().cleaned_data.bind("my//path///my_image.png"), "my/path/my_image.png"),
+		# Is one of options
+		JTestCase.new("is one of options").expect(JPathValidator.new().options(["user://", "res://"]).is_valid.bind("user://")),
+		JTestCase.new("is not one of options").expect_false(JPathValidator.new().options(["user://", "res://"]).is_valid.bind("mods://")),
 	]
 
 
@@ -239,4 +253,21 @@ static func test_nullable() -> Array[JTestCase]:
 				.is_valid
 				.bind({ non_nullable_field = null })
 		),
+	]
+
+
+static func test_dict_validator() -> Array[JTestCase]:
+	return [
+		JTestCase.new("is dictionary").expect(JDictValidator.new().is_valid.bind({ my_key = true })),
+		JTestCase.new("is not dictionary").expect_false(JDictValidator.new().is_valid.bind(true)),
+		# Key, value validators
+		JTestCase.new("is [String, bool] dictionary").expect(JDictValidator.new().keys(JStringValidator.new()).values(JBoolValidator.new()).is_valid.bind({ my_key = true })),
+		JTestCase.new("is not [String, bool] dictionary").expect_false(JDictValidator.new().keys(JStringValidator.new()).values(JBoolValidator.new()).is_valid.bind({ my_key = 1 })),
+		JTestCase.new("is not [String, bool] dictionary (mixed keys)").expect_false(JDictValidator.new().keys(JStringValidator.new()).values(JBoolValidator.new()).is_valid.bind({ "my_key": true, 1: true })),
+		# Required keys
+		JTestCase.new("has required key").expect(JDictValidator.new().required(["my_key"]).is_valid.bind({ my_key = true })),
+		JTestCase.new("missing required key").expect_false(JDictValidator.new().required(["my_key"]).is_valid.bind({})),
+		# Is one of options
+		JTestCase.new("is one of options").expect(JDictValidator.new().options([{ a = true }, { b = true }]).is_valid.bind({ a = true })),
+		JTestCase.new("is not one of options").expect_false(JDictValidator.new().options([{ a = true }, { b = true }]).is_valid.bind({ c = true })),
 	]

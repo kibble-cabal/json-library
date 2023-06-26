@@ -2,11 +2,18 @@ class_name Json extends Object
 
 static var Editor: EditorInterface = null
 
-## See ["addons/json_library/utils/math.gd"] and ["addons/json_library/utils/path.gd"]
-const Utils := {
-	Math = preload("utils/math.gd"),
-	Path = preload("utils/path.gd")
-}
+
+## See [JsonLibrary_Utils_Math]
+const Math := preload("utils/math.gd")
+
+## See [JsonLibrary_Utils_Path]
+const Path := preload("utils/path.gd")
+
+## See [JsonLibrary_Utils_Dict]
+const Dict := preload("utils/dict.gd")
+
+## See [JsonLibrary_Utils_Array]
+const List := preload("utils/array.gd")
 
 
 static func get_plugin_directory() -> String:

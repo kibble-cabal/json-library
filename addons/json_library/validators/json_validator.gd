@@ -36,7 +36,10 @@ func _is_extra_property(name: String) -> bool:
 	return (name.to_lower() if _ignore_case else name) in _validators
 
 
-func is_valid(data: Dictionary) -> bool:
+func is_valid(data) -> bool:
+	if not data is Dictionary: return false
+	if not super.is_valid(data): return false
+	
 	var validated_data := {}
 	
 	# Get case sensitive/insensitive data
@@ -56,10 +59,27 @@ func is_valid(data: Dictionary) -> bool:
 	)
 
 
-func cleaned_data(data: Dictionary, default = {}) -> Dictionary:
+func cleaned_data(data: Dictionary, default = {}):
 	var cleaned := default.duplicate()
 	for prop in data:
 		var name: String = prop.to_lower() if ignore_case else prop
 		var validator: JPropertyValidator = _validators[name]
 		cleaned[name] = validator.cleaned_data(data[prop], default.get(prop))
 	return cleaned
+
+
+static func from_schema(schema: Dictionary) -> JPropertyValidator:
+	if schema.get("type") == "object":
+		var validator := JsonValidator.new().allow_extra_properties()
+		var required_properties: Array = schema.get("required", [])
+		if "enum" in schema: validator.options(schema["enum"])
+		if "properties" in schema:
+			for property_name in schema["properties"].keys():
+				validator.add_property(
+					property_name, 
+					JPropertyValidator
+						.from_schema(schema["properties"][property_name])
+						.is_optional(not property_name in required_properties)
+				)
+		return validator
+	return null

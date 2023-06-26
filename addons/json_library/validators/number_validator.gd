@@ -33,9 +33,21 @@ func step(value) -> JNumberValidator:
 
 func is_valid(data) -> bool:
 	if data == null: return _is_nullable
+	if not super.is_valid(data): return false
 	return (
 		(data is float or data is int)
 		and (data >= _min if _has_min else true)
 		and (data <= _max if _has_max else true)
-		and (Json.Utils.Math.is_rounded(data, _step) if _has_step else true)
+		and (Json.Math.is_rounded(data, _step) if _has_step else true)
 	)
+
+
+static func from_schema(schema: Dictionary) -> JPropertyValidator:
+	if schema.get("type") == "number":
+		var validator := JFloatValidator.new()
+		if "minimum" in schema: validator.minimum(float(schema["minimum"]))
+		if "maximum" in schema: validator.maximum(float(schema["maximum"]))
+		if "multipleOf" in schema: validator.step(float(schema["multipleOf"]))
+		if "enum" in schema: validator.options(schema["enum"])
+		return validator
+	return null
