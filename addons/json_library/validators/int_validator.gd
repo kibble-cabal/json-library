@@ -18,7 +18,9 @@ static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "integer":
 		var validator := JIntValidator.new()
 		if "minimum" in schema: validator.set_minimum(int(schema["minimum"]))
+		if "exclusiveMinimum" in schema: validator.set_minimum_exclusive(int(schema["exclusiveMinimum"]))
 		if "maximum" in schema: validator.set_maximum(int(schema["maximum"]))
+		if "exclusiveMaximum" in schema: validator.set_maximum_exclusive(int(schema["exclusiveMaximum"]))
 		if "multipleOf" in schema: validator.set_step(int(schema["multipleOf"]))
 		if "enum" in schema: validator.set_options(schema["enum"])
 		return validator

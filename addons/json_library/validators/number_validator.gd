@@ -83,7 +83,9 @@ static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "number":
 		var validator := JFloatValidator.new()
 		if "minimum" in schema: validator.set_minimum(float(schema["minimum"]))
+		if "exclusiveMinimum" in schema: validator.set_minimum_exclusive(float(schema["exclusiveMinimum"]))
 		if "maximum" in schema: validator.set_maximum(float(schema["maximum"]))
+		if "exclusiveMaximum" in schema: validator.set_maximum_exclusive(float(schema["exclusiveMaximum"]))
 		if "multipleOf" in schema: validator.set_step(float(schema["multipleOf"]))
 		if "enum" in schema: validator.set_options(schema["enum"])
 		return validator

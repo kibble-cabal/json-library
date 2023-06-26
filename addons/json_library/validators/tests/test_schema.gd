@@ -14,17 +14,18 @@ func _init() -> void:
 static func test_array_schema() -> Array[JTestCase]:
 	var schema_a := JPropertyValidator.from_schema({
 		"type": "array",
-		"items": {
-			"type": "string"
-		}
+		"items": { "type": "string" }
 	})
 	var schema_b := JPropertyValidator.from_schema({
 		"type": "array",
-		"items": {
-			"type": "string"
-		},
+		"items": { "type": "string" },
 		"minItems": 1,
 		"maxItems": 3,
+	})
+	var schema_c :=  JPropertyValidator.from_schema({
+		"type": "array",
+		"items": { "type": "string" },
+		"uniqueItems": true
 	})
 	return [
 		JTestCase.new("is array of strings").expect(schema_a.is_valid.bind(["a", "b", "c"])),
@@ -32,6 +33,8 @@ static func test_array_schema() -> Array[JTestCase]:
 		JTestCase.new("above minimum items, below maximum items").expect(schema_b.is_valid.bind(["a", "b", "c"])),
 		JTestCase.new("below minimum items").expect_false(schema_b.is_valid.bind([])),
 		JTestCase.new("above maximum items").expect_false(schema_b.is_valid.bind(["a", "b", "c", "d"])),
+		JTestCase.new("has unique items").expect(schema_c.is_valid.bind(["a", "b", "c"])),
+		JTestCase.new("has non-unique items").expect_false(schema_c.is_valid.bind(["a", "a", "a"])),
 	]
 
 
@@ -56,6 +59,11 @@ static func test_number_schema() -> Array[JTestCase]:
 		"minimum": 1,
 		"maximum": 10,
 	})
+	var schema_int_exclusive := JPropertyValidator.from_schema({
+		"type": "integer",
+		"exclusiveMinimum": 1,
+		"exclusiveMaximum": 10,
+	})
 	return [
 		JTestCase.new("is float").expect(schema_float.is_valid.bind(1.0)),
 		JTestCase.new("is not float").expect_false(schema_float.is_valid.bind("hello world")),
@@ -63,6 +71,8 @@ static func test_number_schema() -> Array[JTestCase]:
 		JTestCase.new("is not integer").expect_false(schema_int.is_valid.bind("hello world")),
 		JTestCase.new("is below minimum").expect_false(schema_int.is_valid.bind(-1)),
 		JTestCase.new("is above maximum").expect_false(schema_int.is_valid.bind(100)),
+		JTestCase.new("is below minimum (exclusive)").expect_false(schema_int_exclusive.is_valid.bind(1)),
+		JTestCase.new("is above maximum (exclusive)").expect_false(schema_int_exclusive.is_valid.bind(10)),
 	]
 
 

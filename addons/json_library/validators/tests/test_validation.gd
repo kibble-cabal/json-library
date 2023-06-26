@@ -185,6 +185,9 @@ func test_array_validator() -> Array[JTestCase]:
 		# Is one of options
 		JTestCase.new("is one of options").expect(JArrayValidator.new().set_options([[1, 2], [3, 4]]).is_valid.bind([1, 2])),
 		JTestCase.new("is not one of options").expect_false(JArrayValidator.new().set_options([[1, 2], [3, 4]]).is_valid.bind([5, 6])),
+		# Unique elements
+		JTestCase.new("all elements unique").expect(JArrayValidator.new().set_unique_elements().is_valid.bind([1, 2, 3])),
+		JTestCase.new("not all elements unique").expect_false(JArrayValidator.new().set_unique_elements().is_valid.bind([1,1, 1])),
 	]
 
 
