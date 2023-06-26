@@ -1,18 +1,18 @@
 class_name JBoolValidator extends JPropertyValidator
 
-var _allow_truthy_falsey := false
+var allow_truthy_falsy := false
 
 
-func allow_truthy_falsey(value := true) -> JBoolValidator:
-	_allow_truthy_falsey = value
+func set_allow_truthy_falsy(value := true) -> JBoolValidator:
+	allow_truthy_falsy = value
 	return self
 
 
 func is_valid(data) -> bool:
-	if data == null: return _is_nullable
+	if data == null: return is_nullable
 	if not super.is_valid(data): return false
 	if data is bool: return true
-	elif _allow_truthy_falsey:
+	elif allow_truthy_falsy:
 		if data is String: return data.to_lower() in ["true", "false"]
 		elif data is int or data is float: return is_zero_approx(data) or is_equal_approx(data, 1)
 		else: return false
@@ -29,6 +29,6 @@ func cleaned_data(data, default = false) -> bool:
 static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "boolean": 
 		var validator := JBoolValidator.new()
-		if "enum" in schema: validator.options(schema["enum"])
+		if "enum" in schema: validator.set_options(schema["enum"])
 		return validator
 	return null

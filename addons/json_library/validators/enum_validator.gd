@@ -1,42 +1,40 @@
 class_name JEnumValidator extends JPropertyValidator
 
-var _enum: Dictionary
-var _has_allowed_options := false
-var _allowed_options: Array[String] = []
-var _ignore_case := false
+var enum_dict: Dictionary
+var has_allowed_options := false
+var allowed_options: Array[String] = []
+var case_sensitive := true
 
 
 func _init(enum_value: Dictionary = {}) -> void:
-	_enum = enum_value
+	enum_dict = enum_value
 
 
-## Set the validator to be case insensitive
-func ignore_case() -> JEnumValidator:
-	_ignore_case = true
+## Set the validator to be case (in)sensitive
+func set_case_sensitive(value: bool = true) -> JEnumValidator:
+	case_sensitive = value
 	return self
 
 
 func allow_options(options: Array[String]) -> JEnumValidator:
-	_has_allowed_options = true
-	_allowed_options.append_array(options)
+	has_allowed_options = true
+	allowed_options.append_array(options)
 	return self
 
 
 func is_valid(data) -> bool:
-	if data == null: return _is_nullable
+	if data == null: return is_nullable
 	if not data is String: return false
-	if _ignore_case:
-		var enum_keys := Json.List.map_to_lower(_enum.keys())
-		if data.to_lower() in enum_keys:
-			if _has_allowed_options: return data.to_lower() in Json.List.map_to_lower(_allowed_options)
+	if not case_sensitive:
+		if Json.Dict.has_key_case_insensitive(enum_dict, data):
+			if has_allowed_options: return data.to_lower() in Json.List.map_to_lower(allowed_options)
 			else: return true
 		else: return false
-	else: return data in _enum
+	else: 
+		if has_allowed_options: return data in enum_dict and data in allowed_options
+		else: return data in enum_dict
 
 
 func cleaned_data(data, default = 0) -> int:
-	if _ignore_case:
-		for enum_key in _enum.keys():
-			if enum_key.to_lower() == data.to_lower(): return _enum[enum_key]
-		return default
-	else: return int(_enum[data]) if data in _enum else default
+	if not case_sensitive: return Json.Dict.get_case_insensitive(enum_dict, data, default)
+	else: return enum_dict.get(data, default)

@@ -1,85 +1,91 @@
 class_name JsonValidator extends JPropertyValidator
 
-var _allow_extra_properties: bool = false
-var _ignore_case: bool = false
+var additional_properties: bool = false
+var case_sensitive: bool = true
 
 # Dictionary[String, JPropertyValidator]
-var _validators := {}
+var validators := {}
+
+
+var required_properties: Array:
+	get: return validators.keys().filter(func(key): return not validators[key].is_optional)
 
 
 ## Set the validator to be case-insensitive. This only affects top-level properties, sub-schemas will not be affected.
 ## [codeblock]
 ## assert(JsonValidator.new()
-##     .ignore_case()
+##     .set_case_sensitive()
 ##     .add_property("a", JsonIntValidator.new())
 ##     .is_valid({ "A" = 1 }))
 ## [/codeblock]
-func ignore_case() -> JsonValidator:
-	_ignore_case = true
+func set_case_sensitive(value: bool = false) -> JsonValidator:
+	case_sensitive = value
 	return self
 
 
 ## Allows arbitrary additional properties to be present in the JSON when validating
-func allow_extra_properties() -> JsonValidator:
-	_allow_extra_properties = true
+func set_additional_properties() -> JsonValidator:
+	additional_properties = true
 	return self
 
 
-## Add a <property name, [JPropertyValidator]> pair. Must be called AFTER all other config functions (like [method ignore_case], [method allow_extra_properties], etc)
+## Add a <property name, [JPropertyValidator]> pair
 func add_property(name: String, validator: JPropertyValidator) -> JsonValidator:
-	var prop_name := name.to_lower() if _ignore_case else name
-	_validators[prop_name] = validator.property(prop_name)
+	validators[name] = validator
 	return self
 
 
-func _is_extra_property(name: String) -> bool:
-	return (name.to_lower() if _ignore_case else name) in _validators
+func _has_key(dict: Dictionary, key: String) -> bool:
+	return key in dict if case_sensitive else Json.Dict.has_key_case_insensitive(dict, key)
+
+
+func _get_from_dict(dict: Dictionary, key: String, default = null):
+	return dict.get(key, default) if case_sensitive else Json.Dict.get_case_insensitive(dict, key, default)
+
+
+func is_property_optional(property: String) -> bool:
+	return (validators[property] as JPropertyValidator).is_optional
 
 
 func is_valid(data) -> bool:
-	if not data is Dictionary: return false
 	if not super.is_valid(data): return false
-	
-	var validated_data := {}
-	
-	# Get case sensitive/insensitive data
-	if _ignore_case: for name in data.keys(): validated_data[name.to_lower()] = data[name]
-	else: validated_data = data.duplicate()
+	if not data is Dictionary: return false
 	
 	return (
 		# Check that all keys are present and valid
-		_validators.keys().all(func(name): return (
-			_validators[name].is_valid(validated_data[name]) if name in validated_data
-			else _validators[name]._is_optional
-		))
+		validators.keys().all(func(key: String) -> bool:
+			if _has_key(data, key): return validators[key].is_valid(_get_from_dict(data, key))
+			else: return is_property_optional(key))
+		
 		# Check that no extra properties exist, if not allowed
-		and validated_data.keys().all(func(name: String) -> bool: return (
-			true if _allow_extra_properties else _is_extra_property(name)
-		))
+		and data.keys().all(
+			func(name: String) -> bool: return (
+				true if additional_properties 
+				else _has_key(validators, name)
+			))
 	)
 
 
 func cleaned_data(data: Dictionary, default = {}):
 	var cleaned := default.duplicate()
 	for prop in data:
-		var name: String = prop.to_lower() if ignore_case else prop
-		var validator: JPropertyValidator = _validators[name]
-		cleaned[name] = validator.cleaned_data(data[prop], default.get(prop))
+		var validator: JPropertyValidator = _get_from_dict(validators, prop)
+		cleaned[prop] = validator.cleaned_data(data[prop], _get_from_dict(default, prop))
 	return cleaned
 
 
 static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "object":
-		var validator := JsonValidator.new().allow_extra_properties()
+		var validator := JsonValidator.new().set_additional_properties()
 		var required_properties: Array = schema.get("required", [])
-		if "enum" in schema: validator.options(schema["enum"])
+		if "enum" in schema: validator.set_options(schema["enum"])
 		if "properties" in schema:
 			for property_name in schema["properties"].keys():
 				validator.add_property(
 					property_name, 
 					JPropertyValidator
 						.from_schema(schema["properties"][property_name])
-						.is_optional(not property_name in required_properties)
+						.set_is_optional(not property_name in required_properties)
 				)
 		return validator
 	return null

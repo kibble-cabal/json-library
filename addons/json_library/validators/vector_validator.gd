@@ -1,106 +1,110 @@
 class_name JVectorValidator extends JsonValidator
 
-var _type := TYPE_FLOAT
+var type := TYPE_FLOAT
 
-var _has_min := false
-var _min = 0.0
-var _has_max := false
-var _max = 0.0
-var _has_step := false
-var _step = 0.0
+var has_min := false
+var min = 0.0
+var has_max := false
+var max = 0.0
+var has_step := false
+var step = 0.0
 
-var _output := TYPE_DICTIONARY
+var output := TYPE_DICTIONARY
 
-var _validator: JNumberValidator:
+var validator: JNumberValidator:
 	set(value):
-		_validator = value
-		if _has_max: _validator.maximum(_max)
-		if _has_min: _validator.minimum(_min)
-		if _has_step: _validator.step(_step)
+		validator = value
+		if has_max: validator.set_maximum(max)
+		if has_min: validator.set_minimum(min)
+		if has_step: validator.set_step(step)
 
 
 func is_float() -> JVectorValidator:
-	_type = TYPE_FLOAT
-	_validator = JFloatValidator.new()
+	type = TYPE_FLOAT
+	validator = JFloatValidator.new()
 	return self
 
 
 func is_integer() -> JVectorValidator:
-	_type = TYPE_INT
-	_validator = JIntValidator.new()
+	type = TYPE_INT
+	validator = JIntValidator.new()
 	return self
 
 
-func minimum(value: float) -> JVectorValidator:
-	_validator.minimum(value)
+func set_minimum(value: float) -> JVectorValidator:
+	validator.set_minimum(value)
 	return self
 
 
-func maximum(value: float) -> JVectorValidator:
-	_validator.maximum(value)
+func set_maximum(value: float) -> JVectorValidator:
+	validator.set_maximum(value)
 	return self
 
 
-func step(value: float) -> JVectorValidator:
-	_validator.step(value)
+func set_step(value: float) -> JVectorValidator:
+	validator.set_step(value)
 	return self
 
 
 func vec2() -> JVectorValidator:
-	_output = TYPE_VECTOR2
-	return is_float().add_property("x", _validator).add_property("y", _validator)
+	output = TYPE_VECTOR2
+	return is_float().add_property("x", validator).add_property("y", validator)
 
 
 func vec2i() -> JVectorValidator:
-	_output = TYPE_VECTOR2I
-	return is_integer().add_property("x", _validator).add_property("y", _validator)
+	output = TYPE_VECTOR2I
+	return is_integer().add_property("x", validator).add_property("y", validator)
 
 
 func vec3() -> JVectorValidator:
-	_output = TYPE_VECTOR3
-	return is_float().add_property("x", _validator).add_property("y", _validator).add_property("z", _validator)
+	output = TYPE_VECTOR3
+	return is_float().add_property("x", validator).add_property("y", validator).add_property("z", validator)
 
 
 func vec3i() -> JVectorValidator:
-	_output = TYPE_VECTOR3I
-	return is_integer().add_property("x", _validator).add_property("y", _validator).add_property("z", _validator)
+	output = TYPE_VECTOR3I
+	return is_integer().add_property("x", validator).add_property("y", validator).add_property("z", validator)
 
 
 func vec4() -> JVectorValidator:
-	_output = TYPE_VECTOR4
+	output = TYPE_VECTOR4
 	return (is_float()
-		.add_property("x", _validator)
-		.add_property("y", _validator)
-		.add_property("z", _validator)
-		.add_property("w", _validator))
+		.add_property("x", validator)
+		.add_property("y", validator)
+		.add_property("z", validator)
+		.add_property("w", validator))
 
 
 func vec4i() -> JVectorValidator:
-	_output = TYPE_VECTOR4I
+	output = TYPE_VECTOR4I
 	return (is_integer()
-		.add_property("x", _validator)
-		.add_property("y", _validator)
-		.add_property("z", _validator)
-		.add_property("w", _validator))
+		.add_property("x", validator)
+		.add_property("y", validator)
+		.add_property("z", validator)
+		.add_property("w", validator))
 
 
 ## Sets validator to validate as a color
 func color() -> JVectorValidator:
-	_output = TYPE_COLOR
-	return is_float().allow_extra_properties().add_property("x", _validator).add_property("y", _validator).add_property("z", _validator)
+	output = TYPE_COLOR
+	return (is_float()
+		.set_additional_properties()
+		.add_property("r", validator)
+		.add_property("g", validator)
+		.add_property("b", validator))
 
 
 ## Sets the validator to make all properties optional
 func all_optional(is_optional_value := true) -> JVectorValidator:
-	_validator.is_optional(is_optional_value)
+	validator.set_is_optional(is_optional_value)
 	return self
 
 
 func is_valid(data) -> bool:
-	if data == null: return _is_nullable
+	if data == null: return is_nullable
 	if not data is Dictionary: return false
-	ignore_case()
-	for name in _validators: _validators[name] = _validator
+	set_case_sensitive(false)
+	for name in validators: validators[name] = validator
 	return super.is_valid(data)
 
 
@@ -111,14 +115,14 @@ func cleaned_data(data, default = {}):
 		cleaned[default_key.to_lower()] = default[default_key]
 	# Clean int/floats
 	for data_key in data.keys():
-		cleaned[data_key.to_lower()] = _validator.cleaned_data(data[data_key], cleaned.get(data_key.to_lower()))
+		cleaned[data_key.to_lower()] = validator.cleaned_data(data[data_key], cleaned.get(data_key.to_lower(), 0.0))
 	# Create output
-	match _output:
+	match output:
 		TYPE_VECTOR2: return Vector2(cleaned.x, cleaned.y)
 		TYPE_VECTOR2I: return Vector2i(cleaned.x, cleaned.y)
 		TYPE_VECTOR3: return Vector3(cleaned.x, cleaned.y, cleaned.z)
 		TYPE_VECTOR3I: return Vector3i(cleaned.x, cleaned.y, cleaned.z)
 		TYPE_VECTOR4: return Vector4(cleaned.x, cleaned.y, cleaned.z, cleaned.w)
 		TYPE_VECTOR4I: return Vector4i(cleaned.x, cleaned.y, cleaned.z, cleaned.w)
-		TYPE_COLOR: return Color(cleaned.r, cleaned.g, cleaned.b, cleaned.a if "a" in cleaned else 1.0)
+		TYPE_COLOR: return Color(cleaned.r, cleaned.g, cleaned.b, cleaned.get("a", 1.0))
 		_: return data
