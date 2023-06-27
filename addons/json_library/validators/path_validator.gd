@@ -1,15 +1,26 @@
 class_name JPathValidator extends JStringValidator
 
+## Handles validation and cleanup of [String] values represeting file system paths
+##
+## Because this is a Godot-specific feature, this type of validator can only be created through code, and
+## not JSON schemas using the [method JPropertyValidator.from_schema] method.
+
 enum {
-	ANY,
-	DIRECTORY,
-	FILE
+	ANY, ## A path leading to a file or directory
+	DIRECTORY, ## A path leading to a directory
+	FILE ## A path leading to a file
 }
 
+## Defines whether this path should lead to a file, directory, or either
 var type = ANY
 
+## If [code]true[/code], a path must end with one of [member extensions] to be considered valid
 var filter_extensions_enabled := false
+
+## If [member filter_extensions_enabled] is [code]true[/code], the validator will check that the provided path ends with one of these [String]s
 var extensions: Array[String] = []
+
+## If [code]true[/code], the path should lead to an existing file or directory
 var should_exist := false
 
 
@@ -28,17 +39,17 @@ func directory() -> JPathValidator:
 
 ## Set the validator to check if the path is an image
 func image() -> JPathValidator:
-	return set_extensions([".png", ".jpg", ".jpeg", ".svg"])
+	return file().set_extensions([".png", ".jpg", ".jpeg", ".svg"])
 
 
 ## Set the validator to check if the path is a Godot resource
 func resource() -> JPathValidator:
-	return set_extensions([".res", ".tres"])
+	return file().set_extensions([".res", ".tres"])
 
 
 ## Set the validator to check if the path is a 3D mesh
 func mesh() -> JPathValidator:
-	return set_extensions([".gltf", ".obj", ".fbx"])
+	return file().set_extensions([".gltf", ".obj", ".fbx"])
 
 
 ## Set the validator to check for a given file extension
@@ -61,6 +72,13 @@ func set_should_exist(value: bool = true) -> JPathValidator:
 	return self
 
 
+## Returns [code]true[/code] if the provided [code]data[/code] is a valid [String] path based on the properties of this [JStringValidator] object.
+## [br][b]Example:[/b]
+## [codeblock]
+## assert(JStringValidator.new()
+##     .image()
+##     .is_valid("my_image.png"))
+## [/codeblock]
 func is_valid(data) -> bool:
 	if data == null: return is_nullable
 	if not super.is_valid(data): return false
@@ -77,5 +95,8 @@ func is_valid(data) -> bool:
 	)
 
 
-func cleaned_data(data, _default := "") -> String:
-	return (data as String).simplify_path()
+## If [code]data[/code] is valid, returns a simplified path (see [method String.simplify_path]). Otherwise, returns [code]default[/code].
+func cleaned_data(data, default = "") -> String:
+	if not is_valid(data): return default
+	if data is String: return data.simplify_path()
+	return super.cleaned_data(data, default)

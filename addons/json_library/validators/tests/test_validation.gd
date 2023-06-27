@@ -68,14 +68,14 @@ func test_bool_validator() -> Array[JTestCase]:
 	return [
 		JTestCase.new("is bool").expect(JBoolValidator.new().is_valid.bind(false)),
 		JTestCase.new("is not bool").expect_false(JBoolValidator.new().is_valid.bind({})),
-		# Truthy/falsey conversions
+		# Truthy/falsy conversions
 		JTestCase.new("is bool truthy string").expect(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind("True")),
-		JTestCase.new("is not bool truthy/falsey string").expect_false(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind("Yes")),
-		JTestCase.new("is bool falsey int").expect(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind(0)),
-		JTestCase.new("is not bool truthy/falsey int").expect_false(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind(10)),
+		JTestCase.new("is not bool truthy/falsy string").expect_false(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind("Yes")),
+		JTestCase.new("is bool falsy int").expect(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind(0)),
+		JTestCase.new("is not bool truthy/falsy int").expect(JBoolValidator.new().set_allow_truthy_falsy().is_valid.bind(10)),
 		# Cleaned data
-		JTestCase.new("cleaned truthy string").expect(JBoolValidator.new().cleaned_data.bind("TRUE")),
-		JTestCase.new("cleaned falsey int").expect_false(JBoolValidator.new().cleaned_data.bind(0)),
+		JTestCase.new("cleaned truthy string").expect(JBoolValidator.new().set_allow_truthy_falsy().cleaned_data.bind("TRUE")),
+		JTestCase.new("cleaned falsy int").expect_false(JBoolValidator.new().set_allow_truthy_falsy().cleaned_data.bind(0)),
 	]
 
 
@@ -180,8 +180,8 @@ func test_array_validator() -> Array[JTestCase]:
 		JTestCase.new("is below maximum size").expect(JArrayValidator.new().set_max_size(3).set_element_validator(JIntValidator.new()).is_valid.bind([1, 2])),
 		JTestCase.new("is above maximum size").expect_false(JArrayValidator.new().set_max_size(1).set_element_validator(JIntValidator.new()).is_valid.bind([1, 2])),
 		# Cleaned data
-		JTestCase.new("cleaned bool array").expect_equal(JArrayValidator.new().set_element_validator(JBoolValidator.new()).cleaned_data.bind(["true", "false"]), [true, false]),
-		JTestCase.new("cleaned bool array mismatched").expect_not_equal(JArrayValidator.new().set_element_validator(JBoolValidator.new()).cleaned_data.bind(["true", "false"]), [false, true]),
+		JTestCase.new("cleaned bool array").expect_equal(JArrayValidator.new().set_element_validator(JBoolValidator.new().set_allow_truthy_falsy()).cleaned_data.bind(["true", "false"]), [true, false]),
+		JTestCase.new("cleaned bool array mismatched").expect_not_equal(JArrayValidator.new().set_element_validator(JBoolValidator.new().set_allow_truthy_falsy()).cleaned_data.bind(["true", "false"]), [false, true]),
 		# Is one of options
 		JTestCase.new("is one of options").expect(JArrayValidator.new().set_options([[1, 2], [3, 4]]).is_valid.bind([1, 2])),
 		JTestCase.new("is not one of options").expect_false(JArrayValidator.new().set_options([[1, 2], [3, 4]]).is_valid.bind([5, 6])),

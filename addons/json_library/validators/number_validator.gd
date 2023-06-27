@@ -1,23 +1,35 @@
 class_name JNumberValidator extends JPropertyValidator
 
+## Base class for handling validation and cleanup of all numbers
+##
+## See [JFloatValidator] and [JIntValidator] for more specific classes.
+
 enum {
-	INCLUSIVE,
-	EXCLUSIVE
+	INCLUSIVE, ## Includes a given value (e.g. a number range from 1 to 5, inclusive, means [1, 2, 3, 4, 5])
+	EXCLUSIVE ## Excludes a given value (e.g. a number range from 1 to 5, exclusive, means [2, 3, 4])
 }
 
+## Defines whether the [member max] value is [enum INCLUSIVE] or [enum EXCLUSIVE]
 var max_type = INCLUSIVE
+## If [code]true[/code], [member max] will be taken into account during [method is_valid]
 var has_max: bool = false
+## If [member has_max] is [code]true[/code], valid data must be below [member max] (inclusive or exclusive depending on [member max_type])
 var max = 0
 
+## Defines whether the [member min] value is [enum INCLUSIVE] or [enum EXCLUSIVE]
 var min_type = INCLUSIVE
+## If [code]true[/code], [member min] will be taken into account during [method is_valid]
 var has_min: bool = false
+## If [member has_min] is [code]true[/code], valid data must be below [member min] (inclusive or exclusive depending on [member min_type])
 var min = 0
 
+## If [code]true[/code], [member step] will be taken into account during [method is_valid]
 var has_step: bool = false
+## If [member has_step] is [code]true[/code], valid data must be a multiple of [member step]
 var step = 0
 
 
-## Set the maximum value (inclusive)
+## Set the [member max] value (inclusive)
 func set_maximum(value) -> JNumberValidator:
 	max_type = INCLUSIVE
 	has_max = true
@@ -25,7 +37,7 @@ func set_maximum(value) -> JNumberValidator:
 	return self
 
 
-## Set the maximum value (exclusive)
+## Set the [member max] value (exclusive)
 func set_maximum_exclusive(value) -> JNumberValidator:
 	max_type = EXCLUSIVE
 	has_max = true
@@ -33,7 +45,7 @@ func set_maximum_exclusive(value) -> JNumberValidator:
 	return self
 
 
-## Set the minimum value (inclusive)
+## Set the [member min] value (inclusive)
 func set_minimum(value) -> JNumberValidator:
 	min_type = INCLUSIVE
 	has_min = true
@@ -41,7 +53,7 @@ func set_minimum(value) -> JNumberValidator:
 	return self
 
 
-## Set the minimum value (exclusive)
+## Set the [member min] value (exclusive)
 func set_minimum_exclusive(value) -> JNumberValidator:
 	min_type = EXCLUSIVE
 	has_min = true
@@ -49,13 +61,21 @@ func set_minimum_exclusive(value) -> JNumberValidator:
 	return self
 
 
-## Set the step value (e.g. validates that a given number is a multiple of the step [code]value[/code])
+## Set the [member step] value (e.g. validates that a given number is a multiple of the step [code]value[/code])
 func set_step(value) -> JNumberValidator:
 	has_step = true
 	step = value
 	return self
 
 
+## Returns [code]true[/code] if the provided [code]data[/code] is a valid [int] or [float] based on the properties of this [JNumberValidator] object.
+## [br][b]Example:[/b]
+## [codeblock]
+## assert(JNumberValidator.new()
+##     .set_minimum(0)
+##     .set_maximum(1)
+##     .is_valid(0.5))
+## [/codeblock]
 func is_valid(data) -> bool:
 	if data == null: return is_nullable
 	if not super.is_valid(data): return false
@@ -79,6 +99,16 @@ func is_valid(data) -> bool:
 	)
 
 
+
+## Returns a new [JFloatValidator] from the provided JSON schema [Dictionary].
+## See the [url=https://json-schema.org/understanding-json-schema/reference/numeric.html]number JSON Schema documentation[/url] for more information
+## about what type of input can be provided to the [code]schema[/code] parameter.
+## [br][br][b]Note:[/b] Only the following number JSON Schema features are implemented (see [method JPropertyValidator.from_schema] for JSON schema features that apply to all data types)
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/numeric.html#multiples][code]multipleOf[/code][/url] → [member step]
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/numeric.html#range][code]minimum[/code][/url] → [member min]
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/numeric.html#range][code]maximum[/code][/url] → [member max]
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/numeric.html#range][code]exclusiveMinimum[/code][/url] → [member min] (when [member min_type] is [enum EXCLUSIVE])
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/numeric.html#range][code]exclusiveMaximum[/code][/url] → [member max] (when [member min_type] is [enum EXCLUSIVE])
 static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "number":
 		var validator := JFloatValidator.new()

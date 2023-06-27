@@ -1,12 +1,28 @@
 class_name JsonValidator extends JPropertyValidator
 
+## Handles validation and cleanup for JSON object values ([Dictionary]s)
+
+## If [code]true[/code], valid data may include extra properties not accounted for in [member validators]
 var additional_properties: bool = false
+
+## If [code]true[/code], data keys must match exactly to the specified validator keys to be considered valid.
+## [br][b]Example:[/b]
+## [codeblock]
+## assert(JsonValidator.new()
+##     .add_property("X_VALUE", JsonIntValidator.new())
+##     .add_property("Y_VALUE", JsonIntValidator.new())
+##     .set_case_sensitive(false)
+##     .is_valid({ x_value = 1, y_value = 2 }))
+## [/codeblock]
 var case_sensitive: bool = true
 
-# Dictionary[String, JPropertyValidator]
+## [Dictionary][[String] keys, [JPropertyValidator] values] containing property namee [String]s and their associated [JPropertyValidator]s
 var validators := {}
 
 
+## An [Array][[String]] of the properties that a required in this validator.
+## Do NOT mutate directly, this is just a getter. Properties are required by default so 
+## this never needs to be mutated.
 var required_properties: Array:
 	get: return validators.keys().filter(func(key): return not validators[key].is_optional)
 
@@ -24,15 +40,21 @@ func set_case_sensitive(value: bool = false) -> JsonValidator:
 
 
 ## Allows arbitrary additional properties to be present in the JSON when validating
-func set_additional_properties() -> JsonValidator:
-	additional_properties = true
+func set_additional_properties(value: bool = true) -> JsonValidator:
+	additional_properties = value
 	return self
 
 
-## Add a <property name, [JPropertyValidator]> pair
+## Add a [[String] property name, [JPropertyValidator] validator] pair
 func add_property(name: String, validator: JPropertyValidator) -> JsonValidator:
 	validators[name] = validator
 	return self
+
+
+## Returns [code]true[/code] if [code]property[/code] is an optional property
+func is_property_optional(property: String) -> bool:
+	if property in validators: return (validators[property] as JPropertyValidator).is_optional
+	return true
 
 
 func _has_key(dict: Dictionary, key: String) -> bool:
@@ -43,10 +65,16 @@ func _get_from_dict(dict: Dictionary, key: String, default = null):
 	return dict.get(key, default) if case_sensitive else Json.Dict.get_case_insensitive(dict, key, default)
 
 
-func is_property_optional(property: String) -> bool:
-	return (validators[property] as JPropertyValidator).is_optional
-
-
+## Returns [code]true[/code] if the provided [code]data[/code] is valid.
+## This takes into account all [member validators].
+## [br][b]Example:[/b]
+## [codeblock]
+## assert(JsonValidator.new()
+##     .add_property("x", JsonIntValidator.new())
+##     .add_property("y", JsonIntValidator.new())
+##     .set_additional_properties(true)
+##     .is_valid({ x = 1, y = 2, z = 3 }))
+## [/codeblock]
 func is_valid(data) -> bool:
 	if not super.is_valid(data): return false
 	if not data is Dictionary: return false
@@ -66,7 +94,10 @@ func is_valid(data) -> bool:
 	)
 
 
+## Returns the provided [code]data[/code] with each property cleaned by the corresponding [JPropertyValidator] in [member validators].
+## If [code]data[/code] is not valid, returns [code]default[/code].
 func cleaned_data(data: Dictionary, default = {}):
+	if not is_valid(data): return default
 	var cleaned := default.duplicate()
 	for prop in data:
 		var validator: JPropertyValidator = _get_from_dict(validators, prop)
@@ -74,6 +105,12 @@ func cleaned_data(data: Dictionary, default = {}):
 	return cleaned
 
 
+## Returns a new [JsonValidator] from a provided JSON schema [Dictionary].
+## See the [url=https://json-schema.org/understanding-json-schema/reference/object.html]object JSON Schema documentation[/url] for more information
+## about what type of input can be provided to the [code]schema[/code] parameter.
+## [br][br][b]Note:[/b] Only the following Object JSON Schema features are implemented (see [method JPropertyValidator.from_schema] for JSON schema features that apply to all data types)
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/object.html#properties][code]properties[/code][/url] → [member validators]
+## [br]• [url=https://json-schema.org/understanding-json-schema/reference/object.html#additional-properties][code]additionalProperties[/code][/url] → [member additional_properties]
 static func from_schema(schema: Dictionary) -> JPropertyValidator:
 	if schema.get("type") == "object":
 		var validator := JsonValidator.new().set_additional_properties()
@@ -87,5 +124,6 @@ static func from_schema(schema: Dictionary) -> JPropertyValidator:
 						.from_schema(schema["properties"][property_name])
 						.set_is_optional(not property_name in required_properties)
 				)
+		if "additionalProperties" in schema: validator.set_additional_properties(schema["additionalProperties"])
 		return validator
 	return null
