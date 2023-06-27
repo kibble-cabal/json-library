@@ -40,7 +40,7 @@ func test_json_validator() -> Array[JTestCase]:
 			JsonValidator.new()
 				.add_property("a", JIntValidator.new())
 				.add_property("b", JIntValidator.new())
-				.add_property("c", JIntValidator.new())
+				.add_property("c", JIntValidator.new().set_is_optional(true))
 				.cleaned_data
 				.bind({ a = 1, b = 2 }, { a = 0, b = 0, c = 0 }),
 			{ a = 1, b = 2, c = 0 }

@@ -26,7 +26,7 @@ func test_load_object() -> Array[JTestCase]:
 		JTestCase.new("load Node").expect_equal(
 			func() -> String: return (
 				JsonLoader.new(data_path.join("node.json"))
-					.output(Node.new())
+					.set_output(Node.new())
 					.load()
 					.name
 			),
@@ -39,13 +39,13 @@ func test_load_vector() -> Array[JTestCase]:
 	return [
 		JTestCase.new("load Vector2").expect_equal(
 			JsonLoader.new(data_path.join("vec2.json"))
-				.validator(JVectorValidator.new().vec2())
+				.set_validator(JVectorValidator.new().vec2())
 				.load,
 			Vector2(1, 2)
 		),
 		JTestCase.new("load dict containing Vector2").expect_equal(
 			JsonLoader.new(data_path.join("position.json"))
-				.validator(
+				.set_validator(
 					JsonValidator.new()
 						.add_property("position", JVectorValidator.new().vec2())
 				)
@@ -54,8 +54,8 @@ func test_load_vector() -> Array[JTestCase]:
 		),
 		JTestCase.new("load Vector3 with default").expect_equal(
 			JsonLoader.new(data_path.join("vec2.json"))
-				.default_dict({ x = -1, y = -1, z = -1 })
-				.validator(JVectorValidator.new().vec3().all_optional())
+				.set_default_dict({ x = -1, y = -1, z = -1 })
+				.set_validator(JVectorValidator.new().vec3().all_optional())
 				.load,
 			Vector3(1, 2, -1)
 		),
