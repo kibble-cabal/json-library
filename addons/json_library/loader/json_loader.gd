@@ -20,7 +20,7 @@ var validator: JsonValidator = null
 var config_keys_to_snake_case = false
 
 
-func _init(path_value: String) -> void:
+func _init(path_value: String = "") -> void:
 	path = path_value
 
 
@@ -56,6 +56,37 @@ func _convert_json_to_snake_case(dict: Dictionary) -> Dictionary:
 	)
 
 
+## 1. Parses the JSON from [code]string[/code].
+## 2. If [member config_keys_to_snake_case] is [code]true[/code], converts data keys to snake case
+## 3. If a [member validator] is provided, the loaded data will be validated and cleaned (see [method JsonValidator.is_valid] and [method JsonValidator.cleaned_data]).
+## 4. [member output] will be mutated with the loaded data and returned. This means that you can load JSON that effects node properties and other cool things.
+func load_from_string(string: String):
+	var data := JSON.parse_string(string)
+	
+	var data_dict: Dictionary = data if data != null else default_dict
+	
+	# Convert to snake case, if necessary
+	if config_keys_to_snake_case:
+		data_dict = _convert_json_to_snake_case(data_dict)
+	
+	# Validate data
+	var cleaned_data
+	if validator:
+		if data_dict and validator.is_valid(data): 
+			cleaned_data = validator.cleaned_data(data, default_dict)
+	else: cleaned_data = data_dict
+	
+	# Mutate output
+	if cleaned_data is Dictionary:
+		if output is Object:
+			for key in cleaned_data:
+				if key in output: output[key] = cleaned_data[key]
+		elif output is Dictionary: output.merge(cleaned_data, true)
+	else: output = cleaned_data
+	
+	return output
+
+
 ## 1. Loads the file at [member path].
 ## 2. If [member config_keys_to_snake_case] is [code]true[/code], converts data keys to snake case
 ## 3. If a [member validator] is provided, the loaded data will be validated and cleaned (see [method JsonValidator.is_valid] and [method JsonValidator.cleaned_data]).
@@ -65,27 +96,8 @@ func load():
 		# Read file
 		var file := FileAccess.open(path, FileAccess.READ)
 		var string := file.get_as_text()
-		var data := JSON.parse_string(string)
-		
-		var data_dict: Dictionary = data if data != null else default_dict
-		
-		# Convert to snake case, if necessary
-		if config_keys_to_snake_case:
-			data_dict = _convert_json_to_snake_case(data_dict)
-		
-		# Validate data
-		var cleaned_data
-		if validator:
-			if data_dict and validator.is_valid(data): 
-				cleaned_data = validator.cleaned_data(data, default_dict)
-		else: cleaned_data = data_dict
-		
-		# Mutate output
-		if cleaned_data is Dictionary:
-			if output is Object:
-				for key in cleaned_data:
-					if key in output: output[key] = cleaned_data[key]
-			elif output is Dictionary: output.merge(cleaned_data, true)
-		else: output = cleaned_data
+
+		# Load JSON
+		return load_from_string(string)
 	
 	return output
